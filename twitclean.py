@@ -12,6 +12,11 @@ import time
 def eprint(*args, **kwargs):
     print(*args,file=sys.stderr, **kwargs)
 
+def stdout(*args, **kwargs):
+    print(*args, **kwargs)
+    if not sys.stdout.isatty():
+        sys.stdout.flush()
+
 def sigint(received, frame):
     eprint("SIGINT or CTRL-C received. Giving up.")
     sys.exit(0)
@@ -67,9 +72,38 @@ def status_limit(cursor, username)-> Iterator[Status]:
             eprint("[!] Rate limit hit. Sleeping for a bit")
             time.sleep(15 * 60) 
         except StopIteration:
-            eprint(f"[*] Iteration halted on status for {username}. I did not plan for this.")
+            eprint(f"[*] Iteration halted on status for {username}. Most likely the user is inactive.")
             break
 
+Cohort = List[Tuple[str, str, Union[datetime, None]]]
+
+def scan_cohort(api:API, page, date_cutoff: datetime) -> Cohort:
+    inactive_cohort: Cohort = []
+    for user in page:
+        is_active_user = False
+        # typing messed up
+        udata = user._json
+        user_id: str =  udata["id"]
+        user_username: str = udata["screen_name"]
+        newest_created_at = None
+        #print(f"[*] Reviewing user {user_username} - {user_id}")
+        # alternatively just use the model
+        scursor = Cursor(api.user_timeline, user_id=user_id).items(3)
+        for tweet in status_limit(scursor, user_username):
+            # typing messed up
+            created_at: datetime = tweet.created_at
+            if not newest_created_at:
+                newest_created_at = created_at
+            if created_at >= date_cutoff:
+                #print(f"[**] Passes test: {str(created_at)}")
+                is_active_user = True
+                break
+        if not is_active_user:
+            eprint(f"[**] Failed test {user_username}: {str(newest_created_at)} < {date_cutoff}")
+            u = (user_username, user_id, newest_created_at)
+            inactive_cohort.append(u)
+    return inactive_cohort
+    
 def run(username, days_past, env_file=None, max_pages=None):
     if env_file:
         loadenv(env_file)
@@ -78,32 +112,10 @@ def run(username, days_past, env_file=None, max_pages=None):
     date_cutoff = datetime.now() - timedelta(days=days_past)
     inactive_users: List[Tuple[str, str, Union[datetime, None]]] = []
     for page in user_limit(Cursor(api.friends, username).pages(_max_pages)):
-        inactive_cohort: List[Tuple[str, str, Union[datetime, None]]] = []
-        for user in page:
-            is_active_user = False
-            # typing messed up
-            udata = user._json
-            user_id: str =  udata["id"]
-            user_username: str = udata["screen_name"]
-            newest_created_at = None
-            #print(f"[*] Reviewing user {user_username} - {user_id}")
-            # alternatively just use the model
-            scursor = Cursor(api.user_timeline, user_id=user_id).items(3)
-            for tweet in status_limit(scursor, user_username):
-                # typing messed up
-                created_at: datetime = tweet.created_at
-                if not newest_created_at:
-                    newest_created_at = created_at
-                if created_at >= date_cutoff:
-                    #print(f"[**] Passes test: {str(created_at)}")
-                    is_active_user = True
-                    break
-            if not is_active_user:
-                eprint(f"[**] Failed test: {str(newest_created_at)} < {date_cutoff}")
-                u = (user_username, user_id, newest_created_at)
-                inactive_cohort.append(u)
+        cohort: Cohort = scan_cohort(api, page, date_cutoff)
+        stdout("Cohort", cohort)
         # at end of each page, print out users
-        for u in inactive_cohort:
+        for u in cohort:
             user_username = u[0]
             user_id = u[1]
             newest_created_at = u[2]

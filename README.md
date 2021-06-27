@@ -38,6 +38,8 @@ $ python3 twitclean.py -d 30 -u MyUserName -e .env
 
 # alternatively, save list to file
 $ python3 twitclean.py -d 30 -u MyUserName -e .env | tee ~/MyInactiveFollows.txt
+
+# the default uses 30 days, you may want to lower this to 14 or something else depending on your needs
 ```
 
 ### Output
@@ -51,8 +53,9 @@ This script does not do any automatic unfollowing. If you follow thousands or te
 ```
 # use open instead of xdg-open on mac. alternatively, call your browser CLI
 $ for username in $(cat ~/MyInactiveFollows.txt | cut -d ',' -f1); do xdg-open https://twitter.com/${username}; done
-
 ```
+
+The users are paginated. After each cohort, the inactive users will be printed out. 
 
 ### Usage
 ```
