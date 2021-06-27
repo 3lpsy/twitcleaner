@@ -71,7 +71,7 @@ Once the rate limit is hit, just wait. It'll take a bit. Everything is written t
 
 ### Improvements & Post Processing
 
-This script does not do any automatic unfollowing. If you follow thousands or tens of thousands of accounts, this is probably not the script for you. It's expected you'll unfollow manually. Something like the following could work (untested):
+I wrote this in about an hour. The output is pretty messy but it doesn't really matter if piping to a file. This script does not do any automatic unfollowing. If you follow thousands or tens of thousands of accounts, this is probably not the script for you. It's expected you'll unfollow manually. Something like the following could work (untested):
 
 ```
 # use open instead of xdg-open on mac. alternatively, call your browser CLI
