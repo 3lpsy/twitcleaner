@@ -113,13 +113,12 @@ def run(username, days_past, env_file=None, max_pages=None):
     inactive_users: List[Tuple[str, str, Union[datetime, None]]] = []
     for page in user_limit(Cursor(api.friends, username).pages(_max_pages)):
         cohort: Cohort = scan_cohort(api, page, date_cutoff)
-        stdout("Cohort", cohort)
         # at end of each page, print out users
         for u in cohort:
             user_username = u[0]
             user_id = u[1]
             newest_created_at = u[2]
-            print(f"{user_username},{user_id},{newest_created_at}")
+            stdout(f"{user_username},{user_id},{newest_created_at}")
             inactive_users.append(u)
         eprint("[*] Moving to next cohort")
         time.sleep(5)
