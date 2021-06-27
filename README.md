@@ -44,7 +44,30 @@ $ python3 twitclean.py -d 30 -u MyUserName -e .env | tee ~/MyInactiveFollows.txt
 
 ### Output
 
-There are some debug messages printed out. You're likely to encounter rate limits at points. All messages, with the exception of the csv values `(username, user_id, last_created_at)`, are printed to stderr. 
+There are some debug messages printed out. You're likely to encounter rate limits at points. All messages, with the exception of the csv values `(username, user_id, last_created_at)`, are printed to stderr. An example output looks like:
+
+```
+[*] Loading environment file: .env
+[*] Loading into environment: TWITTER_CONSUMER_KEY
+[*] Loading into environment: TWITTER_CONSUMER_SECRET
+[*] Loading into environment: TWITTER_ACCESS_TOKEN
+[*] Loading into environment: TWITTER_ACCESS_SECRET
+[*] Moving to next cohort
+[*] Iteration halted on status for someuser1. Most likely the user is inactive.
+[**] Failed test someuser1: 2021-05-16 08:01:12 < 2021-05-30 00:08:34.701867
+[*] Iteration halted on status for someuser2. Most likely the user is inactive.
+[**] Failed test someuser2: 2021-01-31 12:21:44 < 2021-05-30 00:08:34.701867
+[*] Iteration halted on status for someuser3. Most likely the user is inactive.
+[**] Failed test someuser3: 2021-04-30 14:13:22 < 2021-05-30 00:08:34.701867
+someuser1,12345,2021-05-16 08:01:12
+[*] Moving to next cohort
+someuser2,23456,2021-01-31 12:21:44
+someuser3,34567,2021-04-30 14:13:22
+...
+[!] Rate limit hit. Sleeping for a bit
+```
+
+Once the rate limit is hit, just wait. It'll take a bit. Everything is written to stderr except the CSV values so you'll definitely want to pipe it to a file. The date included in the CSV is the last identified tweet/activity.
 
 ### Improvements & Post Processing
 
